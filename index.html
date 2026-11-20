@@ -112,6 +112,10 @@ video{display:block;width:100%;border-radius:16px;background:#000;margin:14px 0 
 .submit{width:100%;margin-top:6px}
 .gate{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px max(20px,env(safe-area-inset-left)) calc(24px + env(safe-area-inset-bottom))}
 .gate[hidden]{display:none}
+.splash{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .25s}
+.splash .icon{margin:0}
+.splash.off{opacity:0;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.splash{transition:none}}
 .gate form{width:100%;max-width:380px;text-align:center}
 .gate h1{margin:0 0 6px}
 .gate .fld{text-align:left}
@@ -166,7 +170,9 @@ video{display:block;width:100%;border-radius:16px;background:#000;margin:14px 0 
   </form>
 </div>
 
-<div class="gate" id="gate">
+<div class="splash" id="splash" aria-hidden="true"><div class="icon big">E</div></div>
+
+<div class="gate" id="gate" hidden>
   <form id="login" novalidate>
     <div class="icon big" aria-hidden="true">E</div>
     <h1 id="hello">Bonjour</h1>
@@ -308,7 +314,7 @@ async function enter(session){
   owner = !!(data && data.length);
   tab = owner ? 'studio' : 'home';
   $('#gate').hidden = true; $('#tabs').hidden = false; $('#out').hidden = false;
-  render(); load();
+  await load();
   if (!chan) chan = sb.channel('orders-live').on('postgres_changes', {event: '*', schema: 'public', table: 'orders'}, () => load()).subscribe();
   clearInterval(poll); poll = setInterval(() => { if (document.visibilityState === 'visible') load(); }, 30000);
 }
@@ -330,7 +336,7 @@ $('#login').addEventListener('submit', async e => {
   $('#lbtn').disabled = false;
   if (error){ $('#lerr').textContent = studioLogin ? 'E-mail ou mot de passe incorrect.' : 'Code incorrect.'; return; }
   $('#pass').value = '';
-  enter(data.session);
+  await enter(data.session);
 });
 $('#out').addEventListener('click', async () => { await sb.auth.signOut(); leave(); });
 
@@ -492,8 +498,16 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet()
 $('#form').addEventListener('submit', submit);
 
 /* ---------- démarrage ---------- */
-if (sb){
-  sb.auth.getSession().then(({data}) => { if (data && data.session) enter(data.session); });
+function boot(showGate){
+  $('#gate').hidden = !showGate;
+  const s = $('#splash'); s.classList.add('off'); setTimeout(() => s.remove(), 300);
+}
+if (!sb) boot(true);
+else {
+  sb.auth.getSession().then(async ({data}) => {
+    if (data && data.session){ await enter(data.session); boot(false); }
+    else boot(true);
+  }).catch(() => boot(true));
   sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT' && me) leave(); });
 }
 }
