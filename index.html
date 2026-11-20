@@ -182,7 +182,7 @@ video{display:block;width:100%;border-radius:16px;background:#000;margin:14px 0 
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 {
 const C = window.DROP_CONFIG || {};
@@ -203,7 +203,7 @@ const ICON = {
   studio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h13"/></svg>'
 };
 
-const configured = window.supabase && C.SUPABASE_URL && !/VOTRE-PROJET/.test(C.SUPABASE_URL) && C.SUPABASE_ANON_KEY && !/COLLEZ/.test(C.SUPABASE_ANON_KEY);
+const configured = window.supabase && C.SUPABASE_URL && !/VOTRE-PROJET/.test(C.SUPABASE_URL) && C.SUPABASE_ANON_KEY && !/COLLEZ-ICI/.test(C.SUPABASE_ANON_KEY);
 const sb = configured ? window.supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY) : null;
 
 let me = null, owner = false, orders = [], urls = {}, tab = 'home', picked = [], busy = false, loaded = false, chan = null, poll = null;
@@ -386,7 +386,7 @@ async function submit(ev){
     toast('Photos bien reçues. Votre vidéo arrive bientôt.');
     load();
   } catch (e){
-    err.textContent = 'L\'envoi n\'a pas abouti. Vérifiez votre connexion et réessayez.';
+    err.textContent = 'L\'envoi n\'a pas abouti. Réessayez.' + (e && e.message ? ` (détail : ${e.message})` : '');
     console.error(e);
   } finally {
     busy = false; $('#send').disabled = false; bar.hidden = true; fill.style.width = '0'; drawPicked();
